@@ -10,8 +10,8 @@
             >
             <div class="mt-1 relative rounded-md shadow-md">
               <input
-                @keydown.enter="add"
                 v-model="ticker"
+                @keydown.enter="add"
                 type="text"
                 name="wallet"
                 id="wallet"
@@ -137,7 +137,15 @@ export default {
       ticker: null,
       tickers: [
         {
-          name: "demo",
+          name: "demo1",
+          price: "-",
+        },
+        {
+          name: "demo2",
+          price: "2",
+        },
+        {
+          name: "demo3",
           price: "-",
         },
       ],
@@ -152,7 +160,14 @@ export default {
         price: "-",
       };
 
-      this.ticker.push(newTicker);
+      this.tickers.push(newTicker);
+      setInterval(async () => {
+        const f = await fetch(
+          `https://min-api.cryptocompare.com/data/price?fsym=${newTicker.name}&tsyms=USD&api_key=fa575434bfcac672255e7e5ad96438687134273b5c55f9283f64de384503f6cd`
+        );
+        const data = await f.json();
+        console.log(data);
+      }, 2000);
       this.ticker = "";
     },
 
