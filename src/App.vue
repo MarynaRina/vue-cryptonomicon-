@@ -49,10 +49,10 @@
           <div
             v-for="t in tickers"
             :key="t.name"
+            @click="select(t)"
             :class="{
               'border-4': sel === t,
             }"
-            @click="sel = t"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
           >
             <div class="px-4 py-5 sm:p-6 text-center">
@@ -91,10 +91,12 @@
           {{ sel.name }} - USD
         </h3>
         <div class="flex items-end border-gray-600 border-b border-l h-64">
-          <div class="bg-purple-800 border w-10 h-24"></div>
-          <div class="bg-purple-800 border w-10 h-32"></div>
-          <div class="bg-purple-800 border w-10 h-48"></div>
-          <div class="bg-purple-800 border w-10 h-16"></div>
+          <div
+            v-for="(bar, idx) in normalizeGraph()"
+            :key="idx"
+            :style="{ height: `${bar}%` }"
+            class="bg-purple-800 border w-10"
+          ></div>
         </div>
         <button
           @click="sel = null"
@@ -135,44 +137,51 @@ export default {
   data() {
     return {
       ticker: null,
-      tickers: [
-        {
-          name: "demo1",
-          price: "-",
-        },
-        {
-          name: "demo2",
-          price: "2",
-        },
-        {
-          name: "demo3",
-          price: "-",
-        },
-      ],
+      tickers: [],
       sel: null,
+      graph: [],
     };
   },
 
   methods: {
     add() {
-      const newTicker = {
+      const currentTicker = {
         name: this.ticker,
         price: "-",
       };
 
-      this.tickers.push(newTicker);
+      this.tickers.push(currentTicker);
+
       setInterval(async () => {
         const f = await fetch(
-          `https://min-api.cryptocompare.com/data/price?fsym=${newTicker.name}&tsyms=USD&api_key=fa575434bfcac672255e7e5ad96438687134273b5c55f9283f64de384503f6cd`
+          `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=fa575434bfcac672255e7e5ad96438687134273b5c55f9283f64de384503f6cd`
         );
         const data = await f.json();
-        console.log(data);
-      }, 2000);
+
+        this.tickers.find((t) => t.name === currentTicker.name).price =
+          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+        if (this.sel?.name === currentTicker.name) {
+          this.graph.push(data.USD);
+        }
+      }, 5000);
       this.ticker = "";
+    },
+
+    select(ticker) {
+      this.sel = ticker;
+      this.graph = [];
     },
 
     handleDeleteTicker(tickerToRemove) {
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
+    },
+
+    normalizeGraph() {
+      const maxValue = Math.max(...this.graph);
+      const minValue = Math.min(...this.graph);
+      return this.graph.map(
+        (price) => 5 + ((price - minValue) * 95) / (maxValue - minValue)
+      );
     },
   },
 };
