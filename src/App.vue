@@ -39,15 +39,32 @@
               d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
             ></path>
           </svg>
-          Добавить
+          Add
         </button>
       </section>
 
       <template v-if="tickers.length">
         <hr class="w-full border-t border-gray-600 my-4" />
+        <div>
+          <button
+            v-if="page > 1"
+            @click="page = page - 1"
+            class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          >
+            Back
+          </button>
+          <button
+            @click="page = page + 1"
+            class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          >
+            Forward
+          </button>
+          <div>Filter: <input v-model="filter" /></div>
+        </div>
+        <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
-            v-for="t in tickers"
+            v-for="t in FilteredTickers()"
             :key="t.name"
             @click="select(t)"
             :class="{
@@ -140,6 +157,9 @@ export default {
       tickers: [],
       sel: null,
       graph: [],
+      page: 1,
+      filter: "",
+      hasNextPage: true,
     };
   },
 
@@ -154,6 +174,19 @@ export default {
   },
 
   methods: {
+    FilteredTickers() {
+      const start = (this.page - 1) * 6;
+      const end = this.page * 6;
+
+      const filteredTickers = this.tickers.filter((ticker) =>
+        ticker.name.includes(this.filter)
+      );
+
+      this.hasNextPage = filteredTickers.length > end;
+
+      return filteredTickers.slice(start, end);
+    },
+
     subscribeToUpdates(tickerName) {
       setInterval(async () => {
         const f = await fetch(
